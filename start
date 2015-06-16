@@ -1,8 +1,16 @@
-#!/bin/bash
+#!/bin/sh
+
+set -evx
 
 sed -e 's/{{LOGROTATE_MODE}}/'"$LOGROTATE_MODE"'/' \
     -e 's/{{LOGROTATE_ROTATE}}/'"$LOGROTATE_ROTATE"'/' \
     /app/logrotate.tmpl > /etc/logrotate.d/docker
 chmod 0644 /etc/logrotate.d/docker
-exec /usr/local/bin/go-cron "$GOCRON_SCHEDULER" /etc/cron.daily/logrotate
 
+
+if [ "$LOGROTATE_MODE" != "daily" ]
+then
+    mv /etc/periodic/daily/logrotate /etc/periodic/${LOGROTATE_MODE}/logrotate
+fi
+
+exec /usr/sbin/crond -f -d 8
